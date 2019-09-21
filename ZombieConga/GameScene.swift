@@ -20,6 +20,8 @@ class GameScene: SKScene {
     private let zombieMoveSpeed: CGFloat = 480
     private var velocity: CGPoint = .zero
 
+    private let enableLogging = false
+
     override init(size: CGSize) {
         let actualAspectRation = UIScreen.main.bounds.width / UIScreen.main.bounds.height
         let maxAspectRation: CGFloat = 16.0 / 9.0
@@ -45,6 +47,7 @@ class GameScene: SKScene {
 
         zombie = createZombie()
         addChild(zombie)
+        debugDrawPlayableArea()
     }
 
     override func update(_ currentTime: TimeInterval) {
@@ -52,7 +55,6 @@ class GameScene: SKScene {
 
         move(node: zombie, velocity: velocity)
         boundsCheckZombie()
-        debugDrawPlayableArea()
     }
 
     // MARK: - Touches
@@ -117,12 +119,16 @@ class GameScene: SKScene {
     private func move(node: SKNode, velocity: CGPoint) {
         let amountToMove = CGPoint(x: velocity.x * CGFloat(dt),
                                    y: velocity.y * CGFloat(dt))
-        print("Amount to move: \(amountToMove)")
+        log("Amount to move: \(amountToMove)")
 
         node.position = CGPoint(
             x: node.position.x + amountToMove.x,
             y: node.position.y + amountToMove.y
         )
+    }
+
+    private func rotate(node: SKNode, direction: CGPoint) {
+        node.zRotation = CGFloat(atan2(Double(direction.y), Double(direction.x)))
     }
 
     private func moveZombie(toward location: CGPoint) {
@@ -135,27 +141,37 @@ class GameScene: SKScene {
                                 y: offset.y / length)
         velocity = CGPoint(x: direction.x * zombieMoveSpeed,
                            y: direction.y * zombieMoveSpeed)
+        rotate(node: zombie, direction: velocity)
     }
 
     private func boundsCheckZombie() {
         let bottomLeft = CGPoint(x: 0, y: playableRect.minY)
         let topRight = CGPoint(x: size.width, y: playableRect.maxY)
+        var hasChanged = false
 
         if zombie.position.x <= bottomLeft.x {
             zombie.position.x = bottomLeft.x
             velocity.x *= -1
+            hasChanged = true
         }
         if zombie.position.x >= topRight.x {
             zombie.position.x = topRight.x
             velocity.x *= -1
+            hasChanged = true
         }
         if zombie.position.y <= bottomLeft.y {
             zombie.position.y = bottomLeft.y
             velocity.y *= -1
+            hasChanged = true
         }
         if zombie.position.y >= topRight.y {
             zombie.position.y = topRight.y
             velocity.y *= -1
+            hasChanged = true
+        }
+
+        if hasChanged {
+            rotate(node: zombie, direction: velocity)
         }
     }
 
@@ -167,9 +183,15 @@ class GameScene: SKScene {
         }
         lastUpdateTime = currentTime
 
-        print("\(dt * 1000) milliseconds since last update")
+        log("\(dt * 1000) milliseconds since last update")
     }
-    
+
+    private func log(_ text: String) {
+        if enableLogging {
+            print(text)
+        }
+    }
+
 }
 
 private extension String {
