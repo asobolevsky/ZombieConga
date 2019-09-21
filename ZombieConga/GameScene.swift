@@ -11,15 +11,29 @@ import GameplayKit
 
 class GameScene: SKScene {
 
-    private var playableArea: SKNode!
+    private let playableRect: CGRect
     private var zombie: SKNode!
-    private var playableAreaScaleFactor: CGFloat = 1
 
     private var lastUpdateTime: TimeInterval = 0
     private var dt: TimeInterval = 0
 
     private let zombieMoveSpeed: CGFloat = 480
     private var velocity: CGPoint = .zero
+
+    override init(size: CGSize) {
+        let actualAspectRation = UIScreen.main.bounds.width / UIScreen.main.bounds.height
+        let maxAspectRation: CGFloat = 16.0 / 9.0
+        let playableHeight = size.width / max(actualAspectRation, maxAspectRation)
+        let playableMargin = (size.height - playableHeight) / 2.0
+        playableRect = CGRect(origin: CGPoint(x: 0, y: playableMargin),
+                              size: CGSize(width: size.width, height: playableHeight))
+
+        super.init(size: size)
+    }
+
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
 
     // MARK: - Lifecycle
 
@@ -29,14 +43,8 @@ class GameScene: SKScene {
         let background = setupBackground()
         addChild(background)
 
-        // Happens because the scene size is larger than the view's
-        playableAreaScaleFactor = background.size.width / view.bounds.width
-        let screenFrameRect = view.frame.scaled(by: playableAreaScaleFactor)
-        playableArea = setupPlayableArea(with: screenFrameRect, inside: background.frame)
-        addChild(playableArea)
-
         zombie = createZombie()
-        playableArea.addChild(zombie)
+        addChild(zombie)
     }
 
     override func update(_ currentTime: TimeInterval) {
@@ -44,6 +52,7 @@ class GameScene: SKScene {
 
         move(node: zombie, velocity: velocity)
         boundsCheckZombie()
+        debugDrawPlayableArea()
     }
 
     // MARK: - Touches
@@ -57,7 +66,7 @@ class GameScene: SKScene {
             return
         }
 
-        let touchLocation = touch.location(in: playableArea)
+        let touchLocation = touch.location(in: self)
         sceneTouched(at: touchLocation)
     }
 
@@ -66,7 +75,7 @@ class GameScene: SKScene {
             return
         }
 
-        let touchLocation = touch.location(in: playableArea)
+        let touchLocation = touch.location(in: self)
         sceneTouched(at: touchLocation)
     }
 
@@ -85,17 +94,20 @@ class GameScene: SKScene {
         return background
     }
 
-    private func setupPlayableArea(with frame: CGRect, inside parentFrame: CGRect) -> SKNode {
-        let playableArea = SKShapeNode(rect: frame)
-        playableArea.name = .screenFrameNodeName
-        playableArea.position = CGPoint(x: parentFrame.midX - frame.midX, y: parentFrame.midY - frame.midY)
-        return playableArea
+    private func debugDrawPlayableArea() {
+        let shape = SKShapeNode()
+        let path = CGMutablePath()
+        path.addRect(playableRect)
+        shape.path = path
+        shape.strokeColor = SKColor.red
+        shape.lineWidth = 4.0
+        addChild(shape)
     }
 
     private func createZombie() -> SKNode {
         let zombie = SKSpriteNode(imageNamed: "zombie1")
         zombie.name = .zombieNodeName
-        zombie.position = CGPoint(x: 200, y: 200)
+        zombie.position = CGPoint(x: 200, y: playableRect.minY + 200)
         zombie.zPosition = 1
         return zombie
     }
@@ -126,9 +138,8 @@ class GameScene: SKScene {
     }
 
     private func boundsCheckZombie() {
-        let bottomLeft = CGPoint.zero
-        let topRight = CGPoint(x: playableArea.frame.width,
-                               y: playableArea.frame.height)
+        let bottomLeft = CGPoint(x: 0, y: playableRect.minY)
+        let topRight = CGPoint(x: size.width, y: playableRect.maxY)
 
         if zombie.position.x <= bottomLeft.x {
             zombie.position.x = bottomLeft.x
@@ -158,6 +169,7 @@ class GameScene: SKScene {
 
         print("\(dt * 1000) milliseconds since last update")
     }
+    
 }
 
 private extension String {
