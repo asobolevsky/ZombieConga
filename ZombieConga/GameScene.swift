@@ -18,7 +18,9 @@ class GameScene: SKScene {
     private var dt: TimeInterval = 0
 
     private let zombieMoveSpeed: CGFloat = 480
+    private let zombieRotationSpeed: CGFloat = 4.0 * π
     private var velocity: CGPoint = .zero
+    private var lastTouchedLocation: CGPoint = .zero
 
     private let enableLogging = false
 
@@ -53,7 +55,7 @@ class GameScene: SKScene {
     override func update(_ currentTime: TimeInterval) {
         calculateDelta(with: currentTime)
 
-        move(node: zombie, velocity: velocity)
+        updateZombiePosition()
         boundsCheckZombie()
     }
 
@@ -117,61 +119,56 @@ class GameScene: SKScene {
     // MARK: - Helpers
 
     private func move(node: SKNode, velocity: CGPoint) {
-        let amountToMove = CGPoint(x: velocity.x * CGFloat(dt),
-                                   y: velocity.y * CGFloat(dt))
+        let amountToMove = velocity * CGFloat(dt)
         log("Amount to move: \(amountToMove)")
-
-        node.position = CGPoint(
-            x: node.position.x + amountToMove.x,
-            y: node.position.y + amountToMove.y
-        )
+        node.position += amountToMove
     }
 
-    private func rotate(node: SKNode, direction: CGPoint) {
-        node.zRotation = CGFloat(atan2(Double(direction.y), Double(direction.x)))
+    // speed - Radians per second
+    private func rotate(node: SKNode, direction: CGPoint, speed: CGFloat) {
+        let angleDiff = shortestAngleBetween(node.zRotation, direction.angle)
+        let amountToRotate = min(speed * CGFloat(dt), abs(angleDiff))
+        node.zRotation += amountToRotate * angleDiff.sign
     }
 
     private func moveZombie(toward location: CGPoint) {
-        let offset = CGPoint(x: location.x - zombie.position.x,
-                             y: location.y - zombie.position.y)
-        let length = CGFloat(sqrt(Double(offset.x * offset.x) + Double(offset.y * offset.y)))
+        let offset = location - zombie.position
+        velocity = offset.normalized * zombieMoveSpeed
+        lastTouchedLocation = location
+    }
 
-        // Convert vector to a unit vector, normalization
-        let direction = CGPoint(x: offset.x / length,
-                                y: offset.y / length)
-        velocity = CGPoint(x: direction.x * zombieMoveSpeed,
-                           y: direction.y * zombieMoveSpeed)
-        rotate(node: zombie, direction: velocity)
+    private func updateZombiePosition() {
+        let distance = (lastTouchedLocation - zombie.position).length
+        let moveValue = zombieMoveSpeed * CGFloat(dt)
+
+        if distance <= moveValue {
+            zombie.position = lastTouchedLocation
+            velocity = .zero
+        } else {
+            move(node: zombie, velocity: velocity)
+            rotate(node: zombie, direction: velocity, speed: zombieRotationSpeed)
+        }
     }
 
     private func boundsCheckZombie() {
         let bottomLeft = CGPoint(x: 0, y: playableRect.minY)
         let topRight = CGPoint(x: size.width, y: playableRect.maxY)
-        var hasChanged = false
 
         if zombie.position.x <= bottomLeft.x {
             zombie.position.x = bottomLeft.x
             velocity.x *= -1
-            hasChanged = true
         }
         if zombie.position.x >= topRight.x {
             zombie.position.x = topRight.x
             velocity.x *= -1
-            hasChanged = true
         }
         if zombie.position.y <= bottomLeft.y {
             zombie.position.y = bottomLeft.y
             velocity.y *= -1
-            hasChanged = true
         }
         if zombie.position.y >= topRight.y {
             zombie.position.y = topRight.y
             velocity.y *= -1
-            hasChanged = true
-        }
-
-        if hasChanged {
-            rotate(node: zombie, direction: velocity)
         }
     }
 
