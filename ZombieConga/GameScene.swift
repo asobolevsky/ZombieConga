@@ -50,6 +50,8 @@ class GameScene: SKScene {
         zombie = createZombie()
         addChild(zombie)
         debugDrawPlayableArea()
+
+        spawnEnemy()
     }
 
     override func update(_ currentTime: TimeInterval) {
@@ -108,6 +110,9 @@ class GameScene: SKScene {
         addChild(shape)
     }
 
+
+    // MARK: - Node creators
+
     private func createZombie() -> SKNode {
         let zombie = SKSpriteNode(imageNamed: "zombie1")
         zombie.name = .zombieNodeName
@@ -115,6 +120,20 @@ class GameScene: SKScene {
         zombie.zPosition = 1
         return zombie
     }
+
+    private func spawnEnemy() {
+        let enemy = SKSpriteNode(imageNamed: "enemy")
+        enemy.position = CGPoint(x: size.width + enemy.size.width / 2,
+                                 y: size.height / 2)
+        addChild(enemy)
+
+        // NOTE: [action]by actions are preferable as they're reversible
+//        let actionMove = SKAction.move(to: CGPoint(x: -enemy.size.width/2, y: enemy.position.y), duration: 2.0)
+        let actionMove = SKAction.moveTo(x: -enemy.size.width/2, duration: 2.0)
+        enemy.run(actionMove)
+        p. 85
+    }
+
 
     // MARK: - Helpers
 
