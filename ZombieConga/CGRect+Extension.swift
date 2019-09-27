@@ -6,7 +6,7 @@
 //  Copyright © 2019 Alexey Sobolevsky. All rights reserved.
 //
 
-import UIKit
+import CoreGraphics
 
 extension CGRect {
 
