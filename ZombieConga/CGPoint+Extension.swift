@@ -10,6 +10,10 @@ import CoreGraphics
 
 extension CGPoint {
 
+    var vector: CGVector {
+        return CGVector(dx: x, dy: y)
+    }
+
     static func randomPoint(in rect: CGRect) -> CGPoint {
         return CGPoint(
             x: CGFloat.random(min: rect.minX, max: rect.maxX),

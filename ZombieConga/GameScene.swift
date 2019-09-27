@@ -15,13 +15,15 @@ class GameScene: SKScene {
 
     private var zombie: SKNode!
     private let zombieAnimation: SKAction
-    private let zombieMoveSpeed: CGFloat = 480
-    private let zombieRotationSpeed: CGFloat = 4.0 * π
+    private var train = [SKNode]()
 
+    private let moveSpeed: CGFloat = 480
+    private let rotationSpeed: CGFloat = 4.0 * π
     private var lastUpdateTime: TimeInterval = 0
     private var dt: TimeInterval = 0
     private var velocity: CGPoint = .zero
     private var lastTouchedLocation: CGPoint = .zero
+    private var isInvincible = false
 
     private let catCollisionSound = SKAction.playSoundFileNamed("hitCat.wav", waitForCompletion: false)
     private let ladyCollisionSound = SKAction.playSoundFileNamed("hitCatLady.wav", waitForCompletion: false)
@@ -63,6 +65,15 @@ class GameScene: SKScene {
         runRepeatedBlock(with: 1.0) { [weak self] in
             self?.spawnCat()
         }
+
+        let customAction = SKAction.customAction(withDuration: 1) { (_, elapsedTime) in
+            print("elapsedTime: \(elapsedTime)")
+        }
+        let log = SKAction.run {
+            print("Now reversed")
+        }
+        let reversedCustomAction = customAction.reversed()
+        run(SKAction.sequence([ customAction, log, reversedCustomAction ]))
     }
 
     override func update(_ currentTime: TimeInterval) {
@@ -70,6 +81,7 @@ class GameScene: SKScene {
 
         updateZombiePosition()
         boundsCheckZombie()
+        moveTrain()
     }
 
     override func didEvaluateActions() {
@@ -132,7 +144,7 @@ class GameScene: SKScene {
         let zombie = SKSpriteNode(imageNamed: "zombie1")
         zombie.name = .zombieNodeName
         zombie.position = CGPoint(x: 200, y: playableRect.minY + 200)
-        zombie.zPosition = 1
+        zombie.zPosition = 100
         return zombie
     }
 
@@ -146,6 +158,17 @@ class GameScene: SKScene {
         }
 
         return SKAction.animate(with: textures, timePerFrame: 0.1)
+    }
+
+    private func makeBlinkingAnimation() -> SKAction {
+        let blinkTimes = 10.0
+        let duration = 3.0
+        let slice = duration / blinkTimes
+        let blinkAction = SKAction.customAction(withDuration: duration) { (node, elapsedTime) in
+            let remainder = Double(elapsedTime).truncatingRemainder(dividingBy: slice)
+            node.isHidden = remainder > (slice / 2)
+        }
+        return blinkAction
     }
 
     private func spawnLady() {
@@ -209,13 +232,41 @@ class GameScene: SKScene {
     private func moveZombie(toward location: CGPoint) {
         startZombieAnimation()
         let offset = location - zombie.position
-        velocity = offset.normalized * zombieMoveSpeed
+        velocity = offset.normalized * moveSpeed
         lastTouchedLocation = location
+    }
+
+    private func moveTrain() {
+        var targetPosition = zombie.position
+
+        train.forEach { node in
+            defer {
+                targetPosition = node.position
+            }
+
+            guard node.hasActions() == false else {
+                return
+            }
+
+            let actionDuration = 0.3
+            let offset = targetPosition - node.position
+            let direction = offset.normalized
+            let amountToMovePerSec = direction * moveSpeed
+            let amountToMove = amountToMovePerSec * CGFloat(actionDuration)
+            let amountToRotate = direction * rotationSpeed
+
+            if offset.length > amountToMove.length {
+                let moveAction = SKAction.move(by: amountToMove.vector, duration: actionDuration)
+                let rotateAction = SKAction.rotate(toAngle: amountToRotate.angle, duration: actionDuration)
+                let groupAction = SKAction.group([ moveAction, rotateAction ])
+                node.run(groupAction)
+            }
+        }
     }
 
     private func updateZombiePosition() {
         let distance = (lastTouchedLocation - zombie.position).length
-        let moveValue = zombieMoveSpeed * CGFloat(dt)
+        let moveValue = moveSpeed * CGFloat(dt)
 
         if distance <= moveValue {
             zombie.position = lastTouchedLocation
@@ -223,7 +274,7 @@ class GameScene: SKScene {
             stopZombieAnimation()
         } else {
             move(node: zombie, velocity: velocity)
-            rotate(node: zombie, direction: velocity, speed: zombieRotationSpeed)
+            rotate(node: zombie, direction: velocity, speed: rotationSpeed)
         }
     }
 
@@ -260,13 +311,35 @@ class GameScene: SKScene {
     }
 
     private func zombieHit(cat: SKNode) {
-        cat.removeFromParent()
+        cat.name = .trainNodeName
+        cat.removeAllActions()
+        cat.setScale(1)
+        cat.zRotation = 0
+        train.append(cat)
+
+        let becomeGreen = SKAction.colorize(with: SKColor.green, colorBlendFactor: 1.0, duration: 0.2)
+        cat.run(becomeGreen)
+
         run(catCollisionSound)
     }
 
     private func zombieHit(lady: SKNode) {
         lady.removeFromParent()
         run(ladyCollisionSound)
+        startZombieInvincibleAction()
+    }
+
+    private func startZombieInvincibleAction() {
+        guard isInvincible == false else {
+            return
+        }
+
+        isInvincible = true
+        let blinkAction = makeBlinkingAnimation()
+        let invincibleEndAction = SKAction.run { [weak self] in
+            self?.isInvincible = false
+        }
+        zombie.run(SKAction.sequence([ blinkAction, invincibleEndAction ]))
     }
 
     private func checkCollisions() {
@@ -281,16 +354,18 @@ class GameScene: SKScene {
         }
         hitCats.forEach(zombieHit(cat:))
 
-        var hitLadies = [SKNode]()
-        enumerateChildNodes(withName: .ladyNodeName) { (node, _) in
-            guard let lady = node as? SKSpriteNode else {
-                return
+        if isInvincible == false {
+            var hitLadies = [SKNode]()
+            enumerateChildNodes(withName: .ladyNodeName) { (node, _) in
+                guard let lady = node as? SKSpriteNode else {
+                    return
+                }
+                if lady.frame.insetBy(dx: 20, dy: 20).intersects(self.zombie.frame) {
+                    hitLadies.append(lady)
+                }
             }
-            if lady.frame.insetBy(dx: 20, dy: 20).intersects(self.zombie.frame) {
-                hitLadies.append(lady)
-            }
+            hitLadies.forEach(zombieHit(lady:))
         }
-        hitLadies.forEach(zombieHit(lady:))
     }
 
     private func calculateDelta(with currentTime: TimeInterval) {
@@ -328,4 +403,5 @@ private extension String {
     static let zombieAnimationName = "zombieAnimation"
     static let ladyNodeName = "lady"
     static let catNodeName = "cat"
+    static let trainNodeName = "train"
 }
