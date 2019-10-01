@@ -21,7 +21,7 @@ class GameViewController: UIViewController {
     private func setupScene() {
         guard let skView = view as? SKView else { return }
         
-        let scene = GameScene(size: CGSize(width: 2048, height: 1536))
+        let scene = MainMenuScene(size: CGSize(width: 2048, height: 1536))
         skView.showsFPS = true
         skView.showsNodeCount = true
         skView.ignoresSiblingOrder = true
