@@ -14,7 +14,7 @@ struct Resources {
         static let winBackground = "YouWin"
         static let loseBackground = "YouLose"
         static let mainMenu = "MainMenu"
-        static let background1 = "background1"
+        static let background = "background"
         static let zombieIdle = "zombie1"
         static let zombieAnim = "zombie"
         static let lady = "lady"

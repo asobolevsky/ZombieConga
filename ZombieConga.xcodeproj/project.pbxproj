@@ -73,6 +73,16 @@
 			path = Sounds;
 			sourceTree = "<group>";
 		};
+		B4516D052344EE8C0056E339 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				B4C7603F2332A3FD00FE0AAF /* CGRect+Extension.swift */,
+				B4185D42233E1AEB008FE08F /* CGFloat+Extension.swift */,
+				B4185D44233E3301008FE08F /* CGPoint+Extension.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
 		B488E2C6234352470067BF36 /* Scenes */ = {
 			isa = PBXGroup;
 			children = (
@@ -102,6 +112,7 @@
 		B4B99D8D232FE9A3007E81B3 /* ZombieConga */ = {
 			isa = PBXGroup;
 			children = (
+				B4516D052344EE8C0056E339 /* Extensions */,
 				B488E2C6234352470067BF36 /* Scenes */,
 				B4185D53233E4B35008FE08F /* Sounds */,
 				B4B99D8E232FE9A3007E81B3 /* AppDelegate.swift */,
@@ -110,10 +121,7 @@
 				B4B99D9B232FE9A5007E81B3 /* Assets.xcassets */,
 				B4B99D9D232FE9A5007E81B3 /* LaunchScreen.storyboard */,
 				B4B99DA0232FE9A5007E81B3 /* Info.plist */,
-				B4C7603F2332A3FD00FE0AAF /* CGRect+Extension.swift */,
 				B4380B66233648D700C5A294 /* Utils.swift */,
-				B4185D42233E1AEB008FE08F /* CGFloat+Extension.swift */,
-				B4185D44233E3301008FE08F /* CGPoint+Extension.swift */,
 				B4831E9623437523009D0F55 /* Resources.swift */,
 			);
 			path = ZombieConga;
