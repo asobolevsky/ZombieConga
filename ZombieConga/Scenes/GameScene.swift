@@ -10,6 +10,7 @@ import SpriteKit
 import GameplayKit
 
 enum GameState {
+    case paused
     case running
     case gameOver(Bool)
 }
@@ -40,7 +41,7 @@ final class GameScene: SKScene {
 
     private let maxTrainCount = 15
     private var lives = 5
-    private var gameState: GameState = .running
+    private var gameState: GameState = .paused
 
     private let catCollisionSound = SKAction.playSoundFileNamed(Resources.Audio.hitCat, waitForCompletion: false)
     private let ladyCollisionSound = SKAction.playSoundFileNamed(Resources.Audio.hitLady, waitForCompletion: false)
@@ -82,14 +83,11 @@ final class GameScene: SKScene {
             self?.spawnCat()
         }
 
-        let customAction = SKAction.customAction(withDuration: 1) { (_, elapsedTime) in
-            print("elapsedTime: \(elapsedTime)")
+        let initialWait = SKAction.wait(forDuration: 0.5)
+        let startGame = SKAction.run { [unowned self] in
+            self.gameState = .running
         }
-        let log = SKAction.run {
-            print("Now reversed")
-        }
-        let reversedCustomAction = customAction.reversed()
-        run(SKAction.sequence([ customAction, log, reversedCustomAction ]))
+        run(SKAction.sequence([ initialWait, startGame ]))
     }
 
     override func update(_ currentTime: TimeInterval) {
@@ -200,7 +198,7 @@ final class GameScene: SKScene {
     private func createZombie() -> SKNode {
         let zombie = SKSpriteNode(imageNamed: Resources.Images.zombieIdle)
         zombie.name = .zombieNodeName
-        zombie.position = CGPoint(x: 200, y: playableRect.minY + 200)
+        zombie.position = CGPoint(x: 200, y: cameraRect.minY + 200)
         zombie.zPosition = 100
         return zombie
     }
@@ -229,6 +227,10 @@ final class GameScene: SKScene {
     }
 
     private func spawnLady() {
+        guard case .running = gameState else {
+            return
+        }
+
         let lady = SKSpriteNode(imageNamed: Resources.Images.lady)
         lady.name = .ladyNodeName
         lady.position = CGPoint(
@@ -246,6 +248,10 @@ final class GameScene: SKScene {
     }
 
     private func spawnCat() {
+        guard case .running = gameState else {
+            return
+        }
+
         let cat = SKSpriteNode(imageNamed: Resources.Images.cat)
         cat.name = .catNodeName
         cat.zPosition = 50
