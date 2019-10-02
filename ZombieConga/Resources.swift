@@ -28,4 +28,8 @@ struct Resources {
         static let winSound = "win.wav"
         static let loseSound = "lose.wav"
     }
+
+    struct Fonts {
+        static let chalkduster = "Chalkduster"
+    }
 }

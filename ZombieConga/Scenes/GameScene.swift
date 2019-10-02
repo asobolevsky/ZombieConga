@@ -82,12 +82,6 @@ final class GameScene: SKScene {
         runRepeatedBlock(with: 1.0) { [weak self] in
             self?.spawnCat()
         }
-
-        let initialWait = SKAction.wait(forDuration: 0.5)
-        let startGame = SKAction.run { [unowned self] in
-            self.gameState = .running
-        }
-        run(SKAction.sequence([ initialWait, startGame ]))
     }
 
     override func update(_ currentTime: TimeInterval) {
@@ -114,6 +108,10 @@ final class GameScene: SKScene {
     // MARK: - Touches
 
     private func sceneTouched(at location: CGPoint) {
+        if case .paused = gameState {
+            self.gameState = .running
+        }
+
         moveZombie(toward: location)
     }
 
@@ -140,6 +138,8 @@ final class GameScene: SKScene {
     private func setupScene() {
         backgroundColor = SKColor.black
         playBackgroundMusic(Resources.Audio.backgroundMusic)
+
+        makeLevelLabel()
     }
 
     private func setupCamera() {
@@ -310,6 +310,16 @@ final class GameScene: SKScene {
         let reveal = SKTransition.flipHorizontal(withDuration: 0.5)
         backgroundMusicPlayer?.stop()
         view?.presentScene(gameOverScene, transition: reveal)
+    }
+
+    private func makeLevelLabel() {
+        let levelLabel = SKLabelNode(fontNamed: Resources.Fonts.chalkduster)
+        levelLabel.text = "Level: 1"
+        levelLabel.fontColor = SKColor.black
+        levelLabel.fontSize = 100
+        levelLabel.zPosition = 150
+        levelLabel.position = CGPoint(x: size.width / 2, y: size.height / 2)
+        addChild(levelLabel)
     }
 
 
