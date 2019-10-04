@@ -28,6 +28,10 @@ final class GameScene: SKScene {
         return CGRect(origin: CGPoint(x: x, y: y), size: playableRect.size)
     }
 
+    private var levelLabel: SKLabelNode?
+    private var livesLabel: SKLabelNode?
+    private var catsLabel: SKLabelNode?
+
     private var zombie: SKNode!
     private let zombieAnimation: SKAction
     private var train = [SKNode]()
@@ -139,7 +143,9 @@ final class GameScene: SKScene {
         backgroundColor = SKColor.black
         playBackgroundMusic(Resources.Audio.backgroundMusic)
 
-        makeLevelLabel()
+        levelLabel = makeLevelLabel(with: self)
+        livesLabel = makeLivesLabel(with: cameraNode)
+        catsLabel = makeCatsLabel(with: cameraNode)
     }
 
     private func setupCamera() {
@@ -279,7 +285,7 @@ final class GameScene: SKScene {
 
     private func loseCats() {
         var loseCount = 0
-        enumerateChildNodes(withName: .trainNodeName) { (node, stop) in
+        enumerateChildNodes(withName: .trainNodeName) { [unowned self] (node, stop) in
             var randomSpot = node.position
             randomSpot.x += CGFloat.random(min: -100, max: 100)
             randomSpot.y += CGFloat.random(min: -100, max: 100)
@@ -299,6 +305,7 @@ final class GameScene: SKScene {
             loseCount += 1
             if loseCount >= 2 {
                 stop.pointee = true
+                self.updateLabels()
             }
         }
     }
@@ -312,16 +319,51 @@ final class GameScene: SKScene {
         view?.presentScene(gameOverScene, transition: reveal)
     }
 
-    private func makeLevelLabel() {
-        let levelLabel = SKLabelNode(fontNamed: Resources.Fonts.chalkduster)
-        levelLabel.text = "Level: 1"
-        levelLabel.fontColor = SKColor.black
-        levelLabel.fontSize = 100
-        levelLabel.zPosition = 150
-        levelLabel.position = CGPoint(x: size.width / 2, y: size.height / 2)
-        addChild(levelLabel)
+    private func makeLevelLabel(with parent: SKNode) -> SKLabelNode {
+        let label = SKLabelNode(fontNamed: Resources.Fonts.default)
+        label.text = "Level: 1"
+        label.fontColor = SKColor.black
+        label.fontSize = 100
+        label.zPosition = 150
+        label.position = CGPoint(x: size.width / 2, y: size.height / 2)
+        parent.addChild(label)
+        return label
     }
 
+    private func makeLivesLabel(with parent: SKNode) -> SKLabelNode {
+        let label = SKLabelNode(fontNamed: Resources.Fonts.default)
+        label.horizontalAlignmentMode = .left
+        label.verticalAlignmentMode = .bottom
+        label.text = "Lives: \(lives)"
+        label.fontColor = SKColor.black
+        label.fontSize = 100
+        label.zPosition = 150
+        label.position = CGPoint(
+            x: -playableRect.size.width / 2 + CGFloat(30),
+            y: -playableRect.size.height / 2 + CGFloat(30))
+        parent.addChild(label)
+        return label
+    }
+
+    private func makeCatsLabel(with parent: SKNode) -> SKLabelNode {
+        let label = SKLabelNode(fontNamed: Resources.Fonts.default)
+        label.horizontalAlignmentMode = .right
+        label.verticalAlignmentMode = .bottom
+        label.text = "Cats: \(train.count)"
+        label.fontColor = SKColor.black
+        label.fontSize = 100
+        label.zPosition = 150
+        label.position = CGPoint(
+            x: playableRect.size.width / 2 - CGFloat(30),
+            y: -playableRect.size.height / 2 + CGFloat(30))
+        parent.addChild(label)
+        return label
+    }
+
+    private func updateLabels() {
+        livesLabel?.text = "Lives: \(lives)"
+        catsLabel?.text = "Cats: \(train.count)"
+    }
 
     // MARK: - Movement helpers
 
@@ -382,6 +424,11 @@ final class GameScene: SKScene {
             guard let background = node as? SKSpriteNode else { return }
 
             if background.position.x + background.size.width < self.cameraRect.origin.x {
+                if let levelLabel = self.levelLabel {
+                    levelLabel.removeFromParent()
+                    self.levelLabel = nil
+                }
+
                 background.position = CGPoint(
                     x: background.position.x + background.size.width * 2,
                     y: background.position.y
@@ -435,6 +482,7 @@ final class GameScene: SKScene {
         cat.setScale(1)
         cat.zRotation = 0
         train.append(cat)
+        updateLabels()
 
         let becomeGreen = SKAction.colorize(with: SKColor.green, colorBlendFactor: 1.0, duration: 0.2)
         cat.run(becomeGreen)
@@ -450,6 +498,7 @@ final class GameScene: SKScene {
         lady.removeFromParent()
         loseCats()
         lives -= 1
+        updateLabels()
         startZombieInvincibleAction()
 
         if lives <= 0 {

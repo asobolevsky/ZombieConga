@@ -30,6 +30,6 @@ struct Resources {
     }
 
     struct Fonts {
-        static let chalkduster = "Chalkduster"
+        static let `default` = "Glimstick"
     }
 }
