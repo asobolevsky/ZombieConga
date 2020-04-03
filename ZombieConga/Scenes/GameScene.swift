@@ -15,6 +15,15 @@ enum GameState {
     case gameOver(Bool)
 }
 
+// TODO: -
+// - make HUD layer
+// - allow zombie to throw cats at ladies
+// - add some bonus items (like stop watch, speed bump etc)
+// - check if level label is removed whenn off the screen
+// - make zombie stop when reached the touch location
+// - create menu
+
+
 final class GameScene: SKScene {
 
     private let playableAreaNode = SKShapeNode()
@@ -100,7 +109,6 @@ final class GameScene: SKScene {
         }
 
         updateZombiePosition()
-        boundsCheckZombie()
         moveTrain()
         moveCamera()
     }
@@ -322,7 +330,7 @@ final class GameScene: SKScene {
     private func makeLevelLabel(with parent: SKNode) -> SKLabelNode {
         let label = SKLabelNode(fontNamed: Resources.Fonts.default)
         label.text = "Level: 1"
-        label.fontColor = SKColor.black
+        label.fontColor = SKColor.white
         label.fontSize = 100
         label.zPosition = 150
         label.position = CGPoint(x: size.width / 2, y: size.height / 2)
@@ -335,12 +343,12 @@ final class GameScene: SKScene {
         label.horizontalAlignmentMode = .left
         label.verticalAlignmentMode = .bottom
         label.text = "Lives: \(lives)"
-        label.fontColor = SKColor.black
+        label.fontColor = SKColor.white
         label.fontSize = 100
         label.zPosition = 150
         label.position = CGPoint(
             x: -playableRect.size.width / 2 + CGFloat(30),
-            y: -playableRect.size.height / 2 + CGFloat(30))
+            y: playableRect.size.height / 2 - label.frame.height - CGFloat(30))
         parent.addChild(label)
         return label
     }
@@ -350,12 +358,12 @@ final class GameScene: SKScene {
         label.horizontalAlignmentMode = .right
         label.verticalAlignmentMode = .bottom
         label.text = "Cats: \(train.count)"
-        label.fontColor = SKColor.black
+        label.fontColor = SKColor.white
         label.fontSize = 100
         label.zPosition = 150
         label.position = CGPoint(
             x: playableRect.size.width / 2 - CGFloat(30),
-            y: -playableRect.size.height / 2 + CGFloat(30))
+            y: playableRect.size.height / 2 - label.frame.height - CGFloat(30))
         parent.addChild(label)
         return label
     }
@@ -440,6 +448,7 @@ final class GameScene: SKScene {
     private func updateZombiePosition() {
         move(node: zombie, velocity: velocity)
         rotate(node: zombie, direction: velocity, speed: rotationSpeed)
+        boundsCheckZombie()
     }
 
     private func startZombieAnimation() {

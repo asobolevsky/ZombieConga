@@ -109,9 +109,7 @@ extension CGPoint {
 }
 
 extension CGFloat {
-
     var sign: CGFloat {
         return self >= 0.0 ? 1.0 : -1.0
     }
-    
 }
