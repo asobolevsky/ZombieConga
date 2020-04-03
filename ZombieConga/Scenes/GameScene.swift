@@ -22,6 +22,7 @@ enum GameState {
 // - check if level label is removed whenn off the screen
 // - make zombie stop when reached the touch location
 // - create menu
+// - check snake game for button implementation
 
 
 final class GameScene: SKScene {
@@ -44,6 +45,8 @@ final class GameScene: SKScene {
     private var zombie: SKNode!
     private let zombieAnimation: SKAction
     private var train = [SKNode]()
+
+    private let HUDMargin: CGFloat = 50
 
     private let moveSpeed: CGFloat = 480
     private let rotationSpeed: CGFloat = 4.0 * π
@@ -154,6 +157,9 @@ final class GameScene: SKScene {
         levelLabel = makeLevelLabel(with: self)
         livesLabel = makeLivesLabel(with: cameraNode)
         catsLabel = makeCatsLabel(with: cameraNode)
+
+        let circleButton = makeCircleButton(with: cameraNode)
+
     }
 
     private func setupCamera() {
@@ -347,8 +353,8 @@ final class GameScene: SKScene {
         label.fontSize = 100
         label.zPosition = 150
         label.position = CGPoint(
-            x: -playableRect.size.width / 2 + CGFloat(30),
-            y: playableRect.size.height / 2 - label.frame.height - CGFloat(30))
+            x: -playableRect.size.width / 2 + CGFloat(HUDMargin),
+            y: playableRect.size.height / 2 - label.frame.height - CGFloat(HUDMargin))
         parent.addChild(label)
         return label
     }
@@ -362,10 +368,25 @@ final class GameScene: SKScene {
         label.fontSize = 100
         label.zPosition = 150
         label.position = CGPoint(
-            x: playableRect.size.width / 2 - CGFloat(30),
-            y: playableRect.size.height / 2 - label.frame.height - CGFloat(30))
+            x: playableRect.size.width / 2 - CGFloat(HUDMargin),
+            y: playableRect.size.height / 2 - label.frame.height - CGFloat(HUDMargin))
         parent.addChild(label)
         return label
+    }
+
+    private func makeCircleButton(with parent: SKNode) -> SKNode {
+        let buttonRadius: CGFloat = 100
+        let button = SKShapeNode(circleOfRadius: buttonRadius)
+        button.name = .throwCatButtonName
+        button.fillColor = UIColor.gray.withAlphaComponent(0.6)
+        let innerCircle = SKShapeNode(circleOfRadius: buttonRadius - 20)
+        innerCircle.fillColor = UIColor.gray.withAlphaComponent(0.6)
+        button.position = CGPoint(
+            x: playableRect.size.width / 2 - CGFloat(buttonRadius + HUDMargin),
+            y: -playableRect.size.height / 2 + CGFloat(buttonRadius + HUDMargin))
+        button.addChild(innerCircle)
+        parent.addChild(button)
+        return button
     }
 
     private func updateLabels() {
@@ -590,4 +611,5 @@ private extension String {
     static let ladyNodeName = "lady"
     static let catNodeName = "cat"
     static let trainNodeName = "train"
+    static let throwCatButtonName = "throwCatButton"
 }
